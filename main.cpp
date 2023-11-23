@@ -93,10 +93,10 @@ int main(){
     Instruction
             //(rd,rs,rt,opcode)
             I0(6,12,2,LoadOp),
-            I1(2,12,3,AddOp),
-            I2(0,2,4,MultOp),
-            I3(8,6,2,SubOp),
-            I4(10,0,6,DivOp),
+            I1(2,12,3,LoadOp),
+            I2(0,2,4,AddOp),
+            I3(8,6,2,AddOp),
+            I4(10,0,6,AddOp),
             I5(6,8,2,AddOp);
     // Pack Instructions into vector
     vector<Instruction> Inst = {I0,I1,I2,I3,I4,I5};
@@ -132,7 +132,7 @@ int main(){
                                              MULT2,
                                              DIV1,
                                              DIV2,
-                                             DIV3};
+                                             DIV3, LOAD1, LOAD2, LOAD3};
 
     // TODO: could make this a vector rather than a class object
     // Initialize register status objects
