@@ -9,4 +9,5 @@ CFLAGS  = -std=c++11 -g -Wall
 
 all:
 	$(CC) $(CFLAGS) main.cpp Instruction.cpp RegisterStatus.cpp ReservationStation.cpp -o tomasulo
+	./tomasulo
 

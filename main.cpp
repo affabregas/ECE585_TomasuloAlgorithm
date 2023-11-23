@@ -28,21 +28,25 @@ using namespace std;
 //#######################################################################
 //**** Define Architecture
 // NUMBER OF RESERVATION STATIONS
-const int Num_ADD_RS = 4;
+const int Num_ADD_RS = 3;
 const int Num_MULT_RS = 2;
-const int Num_DIV_RS = 3;
+const int Num_DIV_RS = 2;
+const int Num_LOAD_RS = 3;
 // Opcode Values
 const int AddOp = 0;
 const int SubOp = 1;
 const int MultOp = 2;
 const int DivOp = 3;
+const int LoadOp = 4;
 // RESERVATION STATION LATENCY
-const int ADD_Lat = 4;
-const int MULT_Lat = 12;
-const int DIV_Lat = 38;
+const int ADD_Lat = 2;
+const int MULT_Lat = 10;
+const int DIV_Lat = 40;
+const int LOAD_Lat = 2;
 // Datapath Latency
 const int ISSUE_Lat = 1;
 const int WRITEBACK_Lat = 1;
+
 //**** Do not edit these constants
 // Global Clock
 int Clock = 0;
@@ -88,15 +92,14 @@ int main(){
     // Input program instructions
     Instruction
             //(rd,rs,rt,opcode)
-            I0(1,2,3,AddOp),
-            I1(4,1,5,AddOp),
-            I2(6,7,8,SubOp),
-            I3(9,4,10,MultOp),
-            I4(11,12,6,DivOp),
-            I5(8,1,5,MultOp),
-            I6(7,2,3,MultOp);
+            I0(6,12,2,LoadOp),
+            I1(2,12,3,AddOp),
+            I2(0,2,4,MultOp),
+            I3(8,6,2,SubOp),
+            I4(10,0,6,DivOp),
+            I5(6,8,2,AddOp);
     // Pack Instructions into vector
-    vector<Instruction> Inst = {I0,I1,I2,I3,I4,I5,I6};
+    vector<Instruction> Inst = {I0,I1,I2,I3,I4,I5};
 
     //// Input reservation station architecture
     // DONT FORGET TO UPDATE ^
@@ -104,6 +107,10 @@ int main(){
     //const int Num_ADD_RS = 4;
     //const int Num_MULT_RS = 2;
     //const int Num_DIV_RS = 3;
+    ReservationStation
+            LOAD1(LoadOp, OperandInit),
+            LOAD2(LoadOp, OperandInit),
+            LOAD3(LoadOp, OperandInit);
     ReservationStation
             ADD1(AddOp, OperandInit),
             ADD2(AddOp, OperandInit),
@@ -207,6 +214,22 @@ int ISSUE(vector<Instruction>& INST,
     int RSDivStart = Num_ADD_RS+Num_MULT_RS;
     int RSDivEnd = Num_ADD_RS+Num_MULT_RS+Num_DIV_RS;
     switch(r){
+        case LoadOp:
+            for(int i=RSAddStart;i<RSAddEnd;i++){
+                if(!RESSTATION[i].busy){
+                    r = i;
+                    currentInst_ISSUE++;
+                    RESSTATION[i].op = LoadOp;
+                    rsFree = true;
+                    break;
+                }
+            }
+            // if instruction is not issued because no
+            // reservation stations are free exit ISSUE
+            // Init is not necessary if instruction not issued
+            if(!rsFree)
+                return 1;
+            break;
         case AddOp:
             for(int i=RSAddStart;i<RSAddEnd;i++){
                 if(!RESSTATION[i].busy){
@@ -335,6 +358,17 @@ void EXECUTE(vector<Instruction>& INST,
                     //		case(div):	clock += 38;
                     RESSTATION[r].lat++;
                     switch(RESSTATION[r].op){
+                        case(LoadOp):
+                            if(RESSTATION[r].lat == LOAD_Lat){
+                                RESSTATION[r].result = RESSTATION[r].Vj + RESSTATION[r].Vk;
+                                // Result is ready to be writenback
+                                RESSTATION[r].resultReady = true;
+                                RESSTATION[r].lat = 0;
+                                // Set clock cycle when execution ends
+                                INST[RESSTATION[r].instNum].executeClockEnd = Clock;
+                                // reset ISSUE latency for RS
+                                RESSTATION[r].ISSUE_Lat = 0;
+                            }
                         case(AddOp):
                             if(RESSTATION[r].lat == ADD_Lat){
                                 RESSTATION[r].result = RESSTATION[r].Vj + RESSTATION[r].Vk;
